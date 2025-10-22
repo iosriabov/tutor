@@ -11,6 +11,7 @@
     --antracit-medium: #636366;
     --white: #FFFFFF;
     --border-color: rgba(0, 0, 0, 0.1);
+    --vh: 1vh; /* Dynamic viewport height */
 }
 
 body {
@@ -31,6 +32,7 @@ body {
 html {
     height: 100%;
     overflow: hidden;
+    -webkit-text-size-adjust: 100%; /* Prevent text size adjustment on iOS */
 }
 
 .chat-container {
@@ -42,7 +44,8 @@ html {
     right: 0;
     bottom: 0;
     width: 100%;
-    height: 100%;
+    height: calc(var(--vh, 1vh) * 100); /* Dynamic height */
+    max-height: -webkit-fill-available; /* For iOS Safari */
 }
 
 /* Header */
@@ -55,10 +58,7 @@ html {
     border-bottom: 1px solid var(--border-color);
     background-color: var(--white);
     flex-shrink: 0;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: relative; /* Change from fixed to relative */
     z-index: 1000;
 }
 
@@ -115,11 +115,7 @@ html {
 
 /* Messages Container */
 .messages-container {
-    position: absolute;
-    top: 70px; /* Высота header */
-    left: 0;
-    right: 0;
-    bottom: 90px; /* Высота input container */
+    flex: 1; /* Take remaining space between header and input */
     overflow-y: auto;
     overflow-x: hidden;
     padding: 15px;
@@ -127,6 +123,7 @@ html {
     flex-direction: column;
     gap: 10px;
     -webkit-overflow-scrolling: touch;
+    min-height: 0; /* Important for flex child scrolling */
 }
 
 .intro-message {
@@ -182,14 +179,12 @@ html {
 
 /* Input Container */
 .input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative; /* Change from fixed to relative */
     padding: 16px;
     padding-bottom: max(16px, env(safe-area-inset-bottom)); /* Отступ для кнопки Home на iPhone */
     background-color: var(--white);
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0; /* Don't shrink */
     z-index: 500;
 }
 
@@ -273,6 +268,17 @@ html {
 
     .message-bubble {
         max-width: 85%;
+    }
+
+    /* Ensure proper behavior on mobile when keyboard appears */
+    .messages-container {
+        scroll-behavior: smooth;
+    }
+
+    /* Prevent iOS Safari from moving the whole page */
+    body {
+        position: fixed;
+        width: 100%;
     }
 }
 

@@ -19,7 +19,47 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 document.addEventListener('DOMContentLoaded', () => {
     initializeChat();
     setupEventListeners();
+    setupViewportHandling();
 });
+
+// Setup Viewport Handling for mobile keyboards
+function setupViewportHandling() {
+    // Fix viewport height on iOS devices
+    const setViewportHeight = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Set initial viewport height
+    setViewportHeight();
+
+    // Update on resize (including keyboard show/hide)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            setViewportHeight();
+            // Ensure messages stay scrolled to bottom when keyboard appears
+            if (document.activeElement === messageInput) {
+                scrollToBottom();
+            }
+        }, 100);
+    });
+
+    // Handle focus events to ensure proper scrolling
+    messageInput.addEventListener('focus', () => {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 300); // Delay to allow keyboard animation
+    });
+
+    // Prevent bounce scrolling on iOS
+    document.body.addEventListener('touchmove', (e) => {
+        if (!e.target.closest('.messages-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
 
 // Setup Event Listeners
 function setupEventListeners() {
@@ -251,5 +291,8 @@ function showLoading(show) {
 
 // Scroll to Bottom
 function scrollToBottom() {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // Use requestAnimationFrame for smoother scrolling
+    requestAnimationFrame(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
 }
