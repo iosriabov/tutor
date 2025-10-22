@@ -266,11 +266,14 @@ function formatMessageText(text) {
     // Split text by ]]][[[ markers for paragraphs
     // These markers indicate paragraph breaks from the server
     if (formatted.includes(']]]') || formatted.includes('[[[')) {
-        // Split by the paragraph markers
+        // Split by the paragraph markers - use triple brackets
         const paragraphs = formatted.split(/\]\]\]|\[\[\[/);
 
         formatted = paragraphs
-            .map(p => p.trim())
+            .map(p => {
+                // Remove any remaining single or double brackets at the end
+                return p.replace(/\]{1,2}$/g, '').trim();
+            })
             .filter(p => p.length > 0)
             .map(p => '<p>' + p + '</p>')
             .join('');
