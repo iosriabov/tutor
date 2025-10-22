@@ -19,14 +19,21 @@ body {
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .chat-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height для мобильных */
     max-width: 100%;
     margin: 0 auto;
+    position: relative;
 }
 
 /* Header */
@@ -35,9 +42,13 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 15px;
+    padding-top: max(15px, env(safe-area-inset-top)); /* Учёт выреза iPhone */
     border-bottom: 1px solid var(--border-color);
     background-color: var(--white);
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-content {
