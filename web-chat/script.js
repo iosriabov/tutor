@@ -17,10 +17,21 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    initializeIntroMessage();
     initializeChat();
     setupEventListeners();
     setupViewportHandling();
 });
+
+// Initialize intro message with proper formatting
+function initializeIntroMessage() {
+    const introMessage = document.getElementById('introMessage');
+    const introText = `Привет! Я твой AI-наставник. Помогу тебе разобраться в себе, найти свои интересы и сильные стороны, подобрать направления для обучения или хобби, а также научиться справляться с тревогой и стрессом.
+
+О чем хочешь поговорить?`;
+
+    introMessage.innerHTML = formatMessageText(introText);
+}
 
 // Setup Viewport Handling for mobile keyboards
 function setupViewportHandling() {
@@ -184,22 +195,16 @@ async function sendMessageToAPI(text) {
         let buffer = '';
         let receivedText = '';
 
-        console.log('Reading SSE stream...');
-
         while (true) {
             const { done, value } = await reader.read();
 
             if (done) {
-                console.log('Stream finished. Total text received:', receivedText.length, 'chars');
                 break;
             }
 
             // Decode chunk
             const chunk = decoder.decode(value, { stream: true });
             buffer += chunk;
-
-            // Log raw chunk
-            console.log('Raw chunk:', chunk);
 
             // Process complete SSE events
             const lines = buffer.split('\n\n');
@@ -208,28 +213,26 @@ async function sendMessageToAPI(text) {
             for (const line of lines) {
                 if (!line.trim()) continue;
 
-                console.log('Processing line:', line);
-
                 // Parse SSE event
                 const dataMatch = line.match(/^data: (.+)$/m);
                 if (dataMatch) {
-                    // НЕ используем trim() - чтобы сохранить пробелы!
-                    const data = dataMatch[1];
-
-                    console.log('Extracted data:', data);
+                    // НЕ используем trim() - чтобы сохранить пробелы и переводы строк!
+                    let data = dataMatch[1];
 
                     // Skip [DONE] marker
                     if (data.trim() === '[DONE]') {
-                        console.log('Received [DONE] marker');
                         continue;
                     }
 
+                    // Check if data contains escaped newlines and convert them
+                    data = data.replace(/\\n/g, '\n');
+
                     // Append text to message (БЕЗ trim!)
-                    messageBubble.textContent += data;
                     receivedText += data;
+
+                    // Update message with formatting
+                    messageBubble.innerHTML = formatMessageText(receivedText);
                     scrollToBottom();
-                } else {
-                    console.log('No data match for line:', line);
                 }
             }
         }
@@ -252,6 +255,56 @@ async function sendMessageToAPI(text) {
     }
 }
 
+// Format text with basic markdown support
+function formatMessageText(text) {
+    // Escape HTML to prevent XSS
+    let formatted = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Split text by ]]][[[ markers for paragraphs
+    // These markers indicate paragraph breaks from the server
+    if (formatted.includes(']]]') || formatted.includes('[[[')) {
+        // Split by the paragraph markers
+        const paragraphs = formatted.split(/\]\]\]|\[\[\[/);
+
+        formatted = paragraphs
+            .map(p => p.trim())
+            .filter(p => p.length > 0)
+            .map(p => '<p>' + p + '</p>')
+            .join('');
+    } else {
+        // If no markers, treat as single paragraph
+        formatted = '<p>' + formatted + '</p>';
+    }
+
+    // Format bold text **text**
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Format italic text *text* (but not ** which is bold)
+    // Using negative lookbehind and lookahead to avoid matching bold markers
+    formatted = formatted.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+
+    // Format numbered lists (e.g., "1. item" or "1) item")
+    formatted = formatted.replace(/<p>(\d+[\.\)])\s+(.+?)(<\/p>|<br>)/g, '<li class="numbered">$2</li>');
+
+    // Format bulleted lists starting with * (but not *text* which is italic)
+    formatted = formatted.replace(/<p>\*\s+(.+?)(<\/p>|<br>)/g, '<li class="bulleted">$1</li>');
+
+    // Wrap consecutive numbered list items in <ol>
+    formatted = formatted.replace(/(<li class="numbered">.*?<\/li>)+/g, function(match) {
+        return '<ol>' + match + '</ol>';
+    });
+
+    // Wrap consecutive bulleted list items in <ul>
+    formatted = formatted.replace(/(<li class="bulleted">.*?<\/li>)+/g, function(match) {
+        return '<ul>' + match + '</ul>';
+    });
+
+    return formatted;
+}
+
 // Add Message to UI
 function addMessage(text, type) {
     const messageDiv = document.createElement('div');
@@ -259,7 +312,14 @@ function addMessage(text, type) {
 
     const bubbleDiv = document.createElement('div');
     bubbleDiv.className = 'message-bubble';
-    bubbleDiv.textContent = text;
+
+    // Use innerHTML for formatted text (user messages get plain text)
+    if (type === 'user') {
+        bubbleDiv.textContent = text;
+    } else {
+        // For assistant messages, use formatting
+        bubbleDiv.innerHTML = formatMessageText(text);
+    }
 
     messageDiv.appendChild(bubbleDiv);
     messagesContainer.appendChild(messageDiv);

@@ -133,13 +133,17 @@ html {
     border-bottom-left-radius: 0;
     max-width: 75%;
     align-self: flex-start;
-}
-
-.intro-message p {
     font-size: 16px;
     line-height: 1.5;
     color: var(--antracit-ultra);
-    margin: 0;
+}
+
+.intro-message p {
+    margin: 0 0 0.8em 0;
+}
+
+.intro-message p:last-child {
+    margin-bottom: 0;
 }
 
 .message {
@@ -162,7 +166,6 @@ html {
     font-size: 16px;
     line-height: 1.5;
     word-wrap: break-word;
-    white-space: pre-wrap;
 }
 
 .message.user .message-bubble {
@@ -175,6 +178,45 @@ html {
     background-color: var(--gray-light);
     color: var(--antracit-ultra);
     border-bottom-left-radius: 0;
+}
+
+/* Formatting inside messages */
+.message-bubble p {
+    margin: 0 0 0.8em 0;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble strong {
+    font-weight: 600;
+}
+
+.message-bubble em {
+    font-style: italic;
+}
+
+.message-bubble ol,
+.message-bubble ul {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+    list-style-position: inside;
+}
+
+.message-bubble li {
+    margin: 0.3em 0;
+    line-height: 1.5;
+}
+
+.message-bubble ul {
+    list-style-type: disc;
+}
+
+.message-bubble br {
+    display: block;
+    content: "";
+    margin-top: 0.5em;
 }
 
 /* Input Container */
